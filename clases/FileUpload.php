@@ -19,10 +19,11 @@ class FileUpload {
     
     //Validamos las extensiones permitidas del archivo
     
-    static function fileExtension($archivo)
+    static function fileExtension($archivo, $ext)
     {
         $e=explode(".",$_FILES[$archivo]["name"]);
-        if($e=="jpg"||$e=="png"||$e=="gif")
+        
+        if($e==$ext)
         {
             return true;
         }
@@ -32,6 +33,21 @@ class FileUpload {
         }
     }
     
+    
+    //Subimos el archivo y renombramos si ya existe
+    
+    static function upFile($archivo,$a)
+    {
+        
+        if((file_exists($archivo)))
+        {
+           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a,$_FILES[$archivo]["tmp_name"]."(1)");
+        }
+        else
+        {
+           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a);  
+        }
+    }
     
     //Hacemos un switch para escribir los posibles errores
     
@@ -50,21 +66,6 @@ class FileUpload {
             case 7: echo "No se pudo escribir el fichero en el disco.";
             case 8: echo "Una extensión de PHP detuvo la subida de ficheros.";
                 
-        }
-    }
-    
-    
-    //Subimos el archivo y renombramos si ya existe
-    
-    static function upFile($archivo,$a)
-    {
-        if((self::fileExtension($archivo))&& (self::fileSize($archivo, $tam))&&(file_exists($archivo)))
-        {
-           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a,$newName);
-        }
-        else
-        {
-           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a);  
         }
     }
 }
