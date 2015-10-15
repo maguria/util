@@ -1,71 +1,117 @@
 <?php
 
 class FileUpload {
- 
-    //Validamos el tamaño del archivo
+    const CONSERVAR = 1, REEMPLAZAR = 2, RENOMBRAR = 3;
+    private $destino="./", $nombre="", $tamaño=1000000,$parametro,$extension,$error=false, $politica = self::RENOMBRAR;
+//tipo, archivos
+    private $arrayDeTipos = array(
+        "jpg"=>1,
+        "gif"=>1,
+        "png"=>1,
+        "jpeg"=>1
+    );
     
-    static function fileSize($archivo, $tam)
-    {
-        if($_FILES[$archivo]["size"]<$tam)
-        {
+    function __construct($parametro) {
+        
+        if(isset($_FILES[$parametro]) && $_FILES[$parametro]["name"]!==""){
+        $this->parametro=$parametro;
+        //$this->extension= PATHINFO_EXTENSION($_FILES[$parametro]["name"]);
+        $this->extension=  pathinfo($_FILES[$parametro]["name"])["extension"];
+        $this->nombre = pathinfo($_FILES[$parametro]["name"])["filename"];
+        }
+        else{$this->error=true;}
+    }
+
+    public function getDestino() {
+        return $this->destino;
+    }
+
+    public function getNombre() {
+        return $this->nombre;
+    }
+
+    public function getTamaño() {
+        return $this->tamaño;
+    }
+    public function getExtension(){
+        return $this->extension;
+        
+    }
+
+    public function setDestino($destino) {
+        $this->destino = $destino;
+    }
+
+    public function setNombre($nombre) {
+        $this->nombre = $nombre;
+    }
+
+    public function setTamaño($tamaño) {
+        $this->tamaño = $tamaño;
+    }
+    public function getPolitica(){
+        return $this->politica;
+    }
+    public function setPolitica($politica){
+        $this->politica = $politica;
+    }
+
+        public function addTipo($tipo){
+        if(!$this->isTipo($tipo)){
+            $this->arrayDeTipos[$tipo]=1;
             return true;
         }
-        else
-        {
-        return self::errorType($archivo);
-        }
-        
+        return false;
     }
-    
-    //Validamos las extensiones permitidas del archivo
-    
-    static function fileExtension($archivo, $ext)
-    {
-        $e=explode(".",$_FILES[$archivo]["name"]);
-        
-        if($e==$ext)
-        {
+    public function removeTipo($tipo){
+       if($this->isTipo($tipo)){
+            unset($this->arrayDeTipos[$this]);
             return true;
         }
-        else
-        {
-            return self::errorType($archivo);
-        }
+        return false;
     }
-    
-    
-    //Subimos el archivo y renombramos si ya existe
-    
-    static function upFile($archivo,$a)
-    {
+    public function isTipo($tipo){
+        return isset($this->arrayDeTipos[$tipo]);
         
-        if((file_exists($archivo)))
-        {
-           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a,$_FILES[$archivo]["tmp_name"]."(1)");
-        }
-        else
-        {
-           move_uploaded_file($_FILES[$archivo]["tmp_name"],$a);  
-        }
-    }
-    
-    //Hacemos un switch para escribir los posibles errores
-    
-    private static function errorType($archivo)
-    {
-        $error=$FILES_[$archivo]["error"];
         
-        switch($error)
-        {
-            case 0: echo "Archivo subido con éxito";
-            case 1: echo "El fichero subido excede la directiva upload_max_filesize de php.ini.";
-            case 2: echo "El fichero subido excede la directiva MAX_FILE_SIZE especificada en el formulario HTML.";
-            case 3: echo " El fichero fue sólo parcialmente subido.";
-            case 4: echo "No se subió ningún fichero.";
-            case 6: echo "Falta la carpeta temporal.";
-            case 7: echo "No se pudo escribir el fichero en el disco.";
-            case 8: echo "Una extensión de PHP detuvo la subida de ficheros.";
-                
-        }
     }
+
+    public function upload(){
+      if($_FILES[$this->parametro]["error"]!=UPLOAD_ERR_OK){
+          return false;
+      }  
+      if($_FILES[$this->parametro]["size"]>$this->tamaño){
+          return false;
+      }
+      if(!$this->isTipo($this->extension)){
+      return false;
+      }
+      if(!is_dir($this->destino) && substr($this->destino, -1) === "/"){
+          return false;
+      }
+      if($this->politica===self::CONSERVAR && file_exists($this->destino.$this->nombre.".".$this->extension)){
+          return false;
+      }
+      $nombre = $this->nombre;
+      if($this->politica===self::RENOMBRAR && file_exists($this->destino.$this->nombre.".".$this->extension)){
+          $nombre= $this->renombrar($nombre);
+          
+      }
+      
+      return  move_uploaded_file($_FILES[$this->parametro]["tmp_name"],$this->destino.$nombre.".".$this->extension);
+      
+      
+      
+      }
+    
+    private function renombrar($nombre){
+        $i=1;
+        while (file_exists($this->destino.$this->nombre."(".$i.")".".".$this->extension)){
+            $i++;
+        }
+        return $nombre."(".$i.")";
+    }
+    
+    
 }
+
