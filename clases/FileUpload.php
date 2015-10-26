@@ -1,5 +1,6 @@
 <?php
 
+
 class FileUpload {
     const CONSERVAR = 1, REEMPLAZAR = 2, RENOMBRAR = 3;
     private $destino="./", $nombre="", $tamaño=1000000,$parametro,$extension,$error=false, $politica = self::RENOMBRAR;
@@ -112,6 +113,30 @@ class FileUpload {
         return $nombre."(".$i.")";
     }
     
+     private static function multiFiles($multiFiles){
+        $numFiles = count($multiFiles["name"]);
+        $files = array();
+        for($i=0;$i<$numFiles;$i++){
+            
+            $files[$i]['name']=$multiFiles['name'][$i];
+            $files[$i]['type']=$multiFiles['type'][$i];
+            $files[$i] ['tmp_name']=$multiFiles['tmp_name'][$i];
+            $files[$i]['error']=$multiFiles['error'][$i];
+            $files[$i]['size']=$multiFiles['size'][$i];
+        }
+        return $files;
+    }
+    
+     static function subirMulti($parametro)
+     {
+         $cambioArray=self::multiFiles($parametro);
+         
+         for($i=0;$i<count($cambioArray);$i++)
+         {
+             $sube=new FileUpload($cambioArray[$i]);
+         }
+     }
+     
     
 }
 
